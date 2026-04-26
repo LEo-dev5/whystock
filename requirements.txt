@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+chromadb
+anthropic
+yfinance
+newsapi-python
+python-dotenv
+pandas
