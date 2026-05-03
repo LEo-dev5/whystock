@@ -1,11 +1,9 @@
-# backend/app/services/stock_service.py
 import yfinance as yf
 from sqlalchemy.orm import Session
 from app.models.schema import Ticker, PriceData
 from datetime import date
 
 def get_or_create_ticker(db: Session, ticker: str) -> Ticker:
-    # 티커가 DB에 있으면 가져오고, 없으면 새로 만들어
     db_ticker = db.query(Ticker).filter(Ticker.ticker == ticker).first()
     
     if not db_ticker:
