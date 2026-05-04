@@ -185,3 +185,25 @@ h1 {
   color: #f44336;
   margin-bottom: 16px;
 }
+
+.chat-output p {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  margin-bottom: 8px;
+}
+
+.chat-output strong {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.chat-output ul, .chat-output ol {
+  padding-left: 20px;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.chat-output li {
+  margin-bottom: 4px;
+  line-height: 1.8;
+}
