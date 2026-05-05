@@ -13,10 +13,13 @@ function ChatBox({ ticker }) {
     setIsStreaming(true)
 
     streamChat(
-      ticker,
-      query,
-      (text) => setAnswer(prev => prev + text),
-      () => setIsStreaming(false)
+        ticker,
+        query,
+        (text) => setAnswer(prev => prev + text),
+        () => {
+            console.log('스트리밍 완료!')
+            setIsStreaming(false)
+        }
     )
   }
 

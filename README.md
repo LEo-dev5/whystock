@@ -1,6 +1,4 @@
 
-```bash
-cat > ~/Desktop/whystock/README.md << 'EOF'
 # WhyStock 📈
 
 > "왜 올랐어? 왜 떨어졌어?" — 최신 뉴스 기반 AI 주식 분석 도구
@@ -47,6 +45,10 @@ graph LR
 - RAG 기반 뉴스 검색 → Claude API 연동
 - SSE 스트리밍으로 실시간 답변 출력
 - 등락률 시각화 (상승/하락 색상 구분)
+
+## 데모
+
+![WhyStock 데모](assets/whystock.png)
 
 ## 실행 방법
 
@@ -95,6 +97,4 @@ whystock/
     └── src/
         ├── components/    # React 컴포넌트
         └── services/      # API 호출 함수
-```
-EOF
 ```

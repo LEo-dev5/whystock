@@ -15,6 +15,7 @@ export const fetchNews = async (ticker) => {
 };
 
 // SSE 스트리밍 채팅
+// src/services/api.js
 export const streamChat = (ticker, query, onMessage, onDone) => {
     fetch(`${BASE_URL}/chat/`, {
         method: 'POST',
@@ -23,20 +24,19 @@ export const streamChat = (ticker, query, onMessage, onDone) => {
     }).then(response => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-
         const read = () => {
             reader.read().then(({ done, value }) => {
-                if (done) return;
+                if (done) return;  // onDone 제거, 그냥 return만
 
                 const text = decoder.decode(value);
                 const lines = text.split('\n');
 
                 lines.forEach(line => {
                     if (line.startsWith('data: ')) {
-                        const data = line.replace('data: ', '');
+                        const data = line.replace('data: ', '').trim();
                         if (data === '[DONE]') {
-                            onDone();
-                        } else {
+                            onDone();  // [DONE] 신호에서만 호출
+                        } else if (data) {
                             onMessage(data);
                         }
                     }
