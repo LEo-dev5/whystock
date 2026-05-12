@@ -17,7 +17,6 @@ function App() {
     setStockData(null)
 
     try {
-      // 주가 + 뉴스 동시 요청
       const [stock] = await Promise.all([
         fetchStock(inputTicker),
         fetchNews(inputTicker)
@@ -25,7 +24,11 @@ function App() {
       setTicker(inputTicker)
       setStockData(stock)
     } catch (err) {
-      setError('종목을 찾을 수 없어요. 티커를 확인해주세요.')
+      if (err.response?.status === 404) {
+        setError(`"${inputTicker}" 티커를 찾을 수 없어요. 올바른 티커인지 확인해주세요.`)
+      } else {
+        setError('오류가 발생했어요. 잠시 후 다시 시도해주세요.')
+      }
     } finally {
       setLoading(false)
     }

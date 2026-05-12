@@ -35,6 +35,8 @@ def generate_answer_stream(ticker: str, query: str, related_news: list):
     - 자연스러운 문장으로만 답변
     - 뉴스 내용을 근거로 구체적으로 분석
     - 각 문단 사이에 빈 줄을 넣어서 읽기 쉽게 작성
+    - 문장이 완성되게 답변
+    - 띄어쓰기 신경쓰기
     """
 
     # SSE 스트리밍으로 답변 생성
