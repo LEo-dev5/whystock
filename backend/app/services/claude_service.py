@@ -4,7 +4,7 @@ from app.core.config import settings
 
 client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
-def generate_answer_stream(ticker: str, query: str, related_news: list):
+def generate_answer_stream(ticker: str, query: str, related_news: list, company_name: str = ""):
     # 검색된 뉴스를 컨텍스트로 만들기
     if related_news:
         news_context = "\n\n".join([
@@ -20,8 +20,9 @@ def generate_answer_stream(ticker: str, query: str, related_news: list):
     뉴스에 주가 상승/하락의 직접적인 원인이 없더라도,
     관련 뉴스 내용을 바탕으로 가능한 영향 요인을 분석해주세요.
 
-    [종목]
-    {ticker}
+    [종목 정보]
+    티커: {ticker}
+    회사명: {company_name}
 
     [최신 뉴스]
     {news_context}
@@ -35,8 +36,7 @@ def generate_answer_stream(ticker: str, query: str, related_news: list):
     - 자연스러운 문장으로만 답변
     - 뉴스 내용을 근거로 구체적으로 분석
     - 각 문단 사이에 빈 줄을 넣어서 읽기 쉽게 작성
-    - 문장이 완성되게 답변
-    - 띄어쓰기 신경쓰기
+    - 종목명을 잘못 인식하지 말 것: 이 종목은 반드시 {company_name} 입니다
     """
 
     # SSE 스트리밍으로 답변 생성

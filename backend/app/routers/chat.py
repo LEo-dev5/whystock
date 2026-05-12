@@ -22,7 +22,7 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
     db_ticker = get_or_create_ticker(db, ticker)
 
     # 2. 뉴스 수집
-    fetch_and_save_news(db, ticker, db_ticker.id)
+    fetch_and_save_news(db, ticker, db_ticker.id, db_ticker.name)
 
     # 3. 벡터화
     vectorize_news(db, db_ticker.id)
@@ -32,7 +32,7 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
 
     # 5. SSE 스트리밍 응답
     def stream():
-        for text in generate_answer_stream(ticker, query, related_news):
+        for text in generate_answer_stream(ticker, query, related_news, db_ticker.name):
             yield f"data: {text}\n\n"
         yield "data: [DONE]\n\n"
 

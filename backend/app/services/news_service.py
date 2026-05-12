@@ -43,14 +43,20 @@ def is_news_outdated(db: Session, ticker_id: int) -> bool:
 
     return (now - latest_news.published_at.replace(tzinfo=None)) > timedelta(hours=24)
 
-def fetch_and_save_news(db: Session, ticker: str, ticker_id: int) -> list:
+def fetch_and_save_news(db: Session, ticker: str, ticker_id: int, company_name: str = None) -> list:
     if not is_news_outdated(db, ticker_id):
         return []
+
+    # 티커 대신 회사명으로 검색 (일본 종목 대응)
+    search_query = company_name or ticker
+    # "Mitsubishi Heavy Industries" 에서 앞 두 단어만 사용
+    if company_name:
+        search_query = " ".join(company_name.split()[:3])
 
     from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
 
     response = newsapi.get_everything(
-        q=ticker,
+        q=search_query,
         from_param=from_date,
         language="en",
         sort_by="publishedAt",

@@ -1,4 +1,3 @@
-# backend/app/routers/news.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.core.database import get_db
@@ -10,7 +9,7 @@ router = APIRouter(prefix="/news", tags=["news"])
 @router.get("/{ticker}")
 def get_news(ticker: str, db: Session = Depends(get_db)):
     db_ticker = get_or_create_ticker(db, ticker.upper())
-    news_list = fetch_and_save_news(db, ticker.upper(), db_ticker.id)
+    news_list = fetch_and_save_news(db, ticker.upper(), db_ticker.id, db_ticker.name)
     
     return {
         "ticker": ticker.upper(),
