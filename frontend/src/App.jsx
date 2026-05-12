@@ -10,17 +10,21 @@ function App() {
   const [stockData, setStockData] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [loadingMessage, setLoadingMessage] = useState('')
 
   const handleSearch = async (inputTicker) => {
     setLoading(true)
     setError(null)
     setStockData(null)
+    setLoadingMessage('주가 데이터 수집 중...')
 
     try {
-      const [stock] = await Promise.all([
-        fetchStock(inputTicker),
-        fetchNews(inputTicker)
-      ])
+      const stock = await fetchStock(inputTicker)
+      
+      setLoadingMessage('뉴스 수집 중...')
+      await fetchNews(inputTicker)
+      
+      setLoadingMessage('분석 준비 중...')
       setTicker(inputTicker)
       setStockData(stock)
     } catch (err) {
@@ -31,6 +35,7 @@ function App() {
       }
     } finally {
       setLoading(false)
+      setLoadingMessage('')
     }
   }
 
@@ -44,6 +49,10 @@ function App() {
           <StockInfo stockData={stockData} />
           <ChatBox ticker={ticker} />
         </>
+        
+      )}
+      {loading && loadingMessage && (
+        <p className="loading-message">{loadingMessage}</p>
       )}
     </div>
   )
