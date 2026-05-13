@@ -51,7 +51,7 @@ def vectorize_news(db: Session, ticker_id: int):
             news.is_vectorized = True
             continue
 
-        chunks = chunk_text(cleaned_text, chunk_size=500, overlap=100)
+        chunks = chunk_text(cleaned_text, chunk_size=300, overlap=50)
         chunk_ids = [f"{news.id}_{i}" for i in range(len(chunks))]
 
         # 이미 저장된 청크 확인
