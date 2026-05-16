@@ -14,12 +14,18 @@ hallucination을 최소화하고 실제 뉴스 근거 기반의 정확한 답변
 ```mermaid
 graph LR
     A[사용자 질문] --> B[FastAPI]
-    B --> C[NewsAPI 뉴스 수집]
-    C --> D[ChromaDB 벡터화 및 저장]
-    D --> E[관련 뉴스 검색]
-    E --> F[Claude API]
-    F --> G[SSE 스트리밍 응답]
-    G --> H[React 화면 출력]
+    B --> C[Finnhub 뉴스 수집]
+    B --> D[yfinance 실적 데이터]
+    C --> E[BeautifulSoup 본문 크롤링]
+    E --> F[전처리 + 청킹 300자]
+    F --> G[다국어 임베딩 모델]
+    G --> H[ChromaDB 벡터 저장]
+    H --> I[관련 뉴스 검색]
+    I --> J[Claude API]
+    D --> J
+    K[채팅 히스토리] --> J
+    J --> L[SSE 스트리밍]
+    L --> M[React 화면 출력]
 ```
 
 ## 기술 스택
@@ -32,6 +38,8 @@ graph LR
 - yfinance — 실시간 주가 데이터 수집
 - NewsAPI — 최신 뉴스 수집
 - SSE — 실시간 스트리밍 응답
+- Finnhub API — 주식 특화 뉴스 수집 (NewsAPI 대체)
+- sentence-transformers — 다국어 임베딩 모델
 
 **Frontend**
 - React + Vite
@@ -45,6 +53,9 @@ graph LR
 - RAG 기반 뉴스 검색 → Claude API 연동
 - SSE 스트리밍으로 실시간 답변 출력
 - 등락률 시각화 (상승/하락 색상 구분)
+- 채팅 히스토리 저장 및 대화 맥락 유지 (멀티턴 컨텍스트)
+- 실적 데이터 연동 (EPS, 어닝 서프라이즈)
+- 다국어 임베딩 모델로 한국어 질문 정확도 향상
 
 ## 데모
 
