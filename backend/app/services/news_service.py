@@ -1,13 +1,13 @@
-# backend/app/services/news_service.py
-from newsapi import NewsApiClient
+import finnhub
 from sqlalchemy.orm import Session
 from app.models.schema import NewsData
 from app.core.config import settings
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
+import time
 
-newsapi = NewsApiClient(api_key=settings.NEWS_API_KEY)
+finnhub_client = finnhub.Client(api_key=settings.FINNHUB_API_KEY)
 
 def crawl_article_content(url: str) -> str:
     try:
@@ -17,11 +17,9 @@ def crawl_article_content(url: str) -> str:
         response = requests.get(url, headers=headers, timeout=5)
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # 불필요한 태그 제거
         for tag in soup(["script", "style", "nav", "footer", "header", "aside"]):
             tag.decompose()
 
-        # 본문 추출 (p 태그 기준)
         paragraphs = soup.find_all("p")
         content = " ".join([p.get_text().strip() for p in paragraphs if p.get_text().strip()])
 
@@ -47,49 +45,44 @@ def fetch_and_save_news(db: Session, ticker: str, ticker_id: int, company_name: 
     if not is_news_outdated(db, ticker_id):
         return []
 
-    # 티커 대신 회사명으로 검색 (일본 종목 대응)
-    search_query = company_name or ticker
-    # "Mitsubishi Heavy Industries" 에서 앞 두 단어만 사용
-    if company_name:
-        search_query = " ".join(company_name.split()[:3])
-
+    # Finnhub는 티커로 직접 뉴스 검색
     from_date = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+    to_date = datetime.now().strftime("%Y-%m-%d")
 
-    response = newsapi.get_everything(
-        q=search_query,
-        from_param=from_date,
-        language="en",
-        sort_by="publishedAt",
-        page_size=10
-    )
+    # 일본 종목은 .T 제거 후 검색
+    search_ticker = ticker.replace(".T", "")
 
-    if response["status"] != "ok":
+    try:
+        news_list = finnhub_client.company_news(search_ticker, _from=from_date, to=to_date)
+    except Exception as e:
+        print(f"Finnhub 뉴스 수집 실패: {e}")
+        return []
+
+    if not news_list:
         return []
 
     saved_news = []
 
-    for article in response["articles"]:
+    for article in news_list[:10]:  # 최대 10개
         existing = db.query(NewsData).filter(
-            NewsData.url == article["url"]
+            NewsData.url == article.get("url", "")
         ).first()
 
         if existing:
             continue
 
         # URL로 본문 직접 크롤링
-        full_content = crawl_article_content(article["url"])
+        full_content = crawl_article_content(article.get("url", ""))
+        content = full_content or article.get("summary") or ""
 
-        # 크롤링 실패시 NewsAPI 본문으로 fallback
-        content = full_content or article.get("content") or article.get("description") or ""
+        published_at = datetime.fromtimestamp(article.get("datetime", 0))
 
         news = NewsData(
             ticker_id=ticker_id,
-            title=article["title"] or "",
+            title=article.get("headline") or "",
             content=content,
-            url=article["url"],
-            published_at=datetime.strptime(
-                article["publishedAt"], "%Y-%m-%dT%H:%M:%SZ"
-            ),
+            url=article.get("url") or "",
+            published_at=published_at,
             is_vectorized=False
         )
         db.add(news)
