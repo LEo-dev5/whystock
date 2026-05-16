@@ -47,7 +47,14 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
     # 5. 실적 데이터 수집
     earnings = fetch_earnings(ticker)
 
-    # 6. 사용자 질문 저장
+    # 6. 이전 대화 히스토리 가져오기
+    history = db.query(ChatHistory).filter(
+        ChatHistory.ticker_id == db_ticker.id
+    ).order_by(ChatHistory.created_at.asc()).all()
+
+    chat_history = [{"role": h.role, "content": h.content} for h in history]
+
+    # 7. 사용자 질문 저장
     user_msg = ChatHistory(
         ticker_id=db_ticker.id,
         role="user",
@@ -56,15 +63,14 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
     db.add(user_msg)
     db.commit()
 
-    # 7. SSE 스트리밍 + 답변 저장
+    # 8. SSE 스트리밍 + 답변 저장
     answer_buffer = []
 
     def stream():
-        for text in generate_answer_stream(ticker, query, related_news, db_ticker.name, earnings):
+        for text in generate_answer_stream(ticker, query, related_news, db_ticker.name, earnings, chat_history):
             answer_buffer.append(text)
             yield f"data: {text}\n\n"
 
-        # 스트리밍 완료 후 답변 저장
         full_answer = "".join(answer_buffer)
         assistant_msg = ChatHistory(
             ticker_id=db_ticker.id,

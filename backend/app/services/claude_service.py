@@ -3,7 +3,7 @@ from app.core.config import settings
 
 client = anthropic.Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
-def generate_answer_stream(ticker: str, query: str, related_news: list, company_name: str = "", earnings: str = ""):
+def generate_answer_stream(ticker: str, query: str, related_news: list, company_name: str = "", earnings: str = "", chat_history: list = []):
     if related_news:
         news_context = "\n\n".join([
             f"뉴스 {i+1}:\n{news}"
@@ -12,7 +12,7 @@ def generate_answer_stream(ticker: str, query: str, related_news: list, company_
     else:
         news_context = "관련 뉴스를 찾을 수 없습니다."
 
-    prompt = f"""
+    system_prompt = f"""
 당신은 주식 시장 분석 AI입니다.
 아래 최신 뉴스와 실적 데이터를 참고해서 사용자의 질문에 답변해주세요.
 뉴스에 주가 상승/하락의 직접적인 원인이 없더라도,
@@ -28,9 +28,6 @@ def generate_answer_stream(ticker: str, query: str, related_news: list, company_
 [실적 데이터]
 {earnings if earnings else "실적 데이터를 찾을 수 없습니다."}
 
-[사용자 질문]
-{query}
-
 반드시 다음 규칙을 지켜주세요:
 - 마크다운 문법 사용 금지 (**, #, *, - 등)
 - 이모지 사용 금지
@@ -41,10 +38,22 @@ def generate_answer_stream(ticker: str, query: str, related_news: list, company_
 - 제공된 뉴스 내용을 직접 인용하지 말고 반드시 자신의 말로 재해석해서 작성
 """
 
+    # 이전 대화 히스토리를 messages 배열로 변환
+    messages = []
+    for msg in chat_history[-6:]:  # 최근 6개만 (3턴)
+        messages.append({
+            "role": msg["role"],
+            "content": msg["content"]
+        })
+
+    # 현재 질문 추가
+    messages.append({"role": "user", "content": query})
+
     with client.messages.stream(
         model="claude-haiku-4-5",
         max_tokens=1000,
-        messages=[{"role": "user", "content": prompt}]
+        system=system_prompt,
+        messages=messages
     ) as stream:
         for text in stream.text_stream:
             yield text
