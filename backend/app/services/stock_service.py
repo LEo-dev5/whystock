@@ -56,3 +56,32 @@ def fetch_and_save_price(db: Session, ticker: str) -> dict:
         "close": close_price,
         "change_rate": change_rate
     }
+
+def fetch_earnings(ticker: str) -> str:
+    try:
+        stock = yf.Ticker(ticker)
+        earnings = stock.earnings_dates
+        
+        if earnings is None or earnings.empty:
+            return ""
+        
+        # 최근 4분기만 가져오기
+        recent = earnings.head(2)
+        
+        result = "최근 실적 데이터:\n"
+        for date, row in recent.iterrows():
+            date_str = date.strftime("%Y-%m-%d")
+            eps_est = row.get("EPS Estimate", "N/A")
+            surprise = row.get("Surprise(%)", "N/A")
+            
+            if surprise != "N/A" and not isinstance(surprise, str):
+                surprise_str = f"{surprise:+.2f}%"
+            else:
+                surprise_str = "미발표"
+                
+            result += f"- {date_str}: EPS 예상 {eps_est}, 서프라이즈 {surprise_str}\n"
+        
+        return result
+    except Exception as e:
+        print(f"실적 데이터 수집 실패: {e}")
+        return ""
