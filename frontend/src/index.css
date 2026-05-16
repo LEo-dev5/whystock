@@ -215,3 +215,40 @@ h1 {
   font-size: 0.9rem;
   margin-bottom: 16px;
 }
+
+/* 채팅 히스토리 */
+.chat-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-item {
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.history-item.user {
+  background-color: #2a2d3a;
+  align-self: flex-end;
+  max-width: 80%;
+}
+
+.history-item.assistant {
+  background-color: #0f1117;
+  border: 1px solid #2a2d3a;
+  align-self: flex-start;
+  max-width: 90%;
+}
+
+.role-label {
+  font-size: 0.75rem;
+  color: #8b8fa8;
+  display: block;
+  margin-bottom: 4px;
+}

@@ -38,3 +38,15 @@ class NewsData(Base):
     is_vectorized = Column(Boolean, default=False)
 
     ticker = relationship("Ticker", back_populates="news_data")
+
+
+class ChatHistory(Base):
+    __tablename__ = "chat_history"
+
+    id = Column(Integer, primary_key=True, index=True)
+    ticker_id = Column(Integer, ForeignKey("tickers.id"))
+    role = Column(String(20), nullable=False)
+    content = Column(Text, nullable=False)
+    created_at = Column(TIMESTAMP, server_default="NOW()")
+
+    ticker = relationship("Ticker", backref="chat_history")

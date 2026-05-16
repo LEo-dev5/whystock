@@ -6,6 +6,7 @@ from app.services.stock_service import get_or_create_ticker, fetch_earnings
 from app.services.news_service import fetch_and_save_news
 from app.services.vector_service import vectorize_news, search_related_news
 from app.services.claude_service import generate_answer_stream
+from app.models.schema import ChatHistory
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -13,6 +14,18 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 class ChatRequest(BaseModel):
     ticker: str
     query: str
+
+@router.get("/history/{ticker}")
+def get_history(ticker: str, db: Session = Depends(get_db)):
+    db_ticker = db.query(__import__('app.models.schema', fromlist=['Ticker']).Ticker).filter_by(ticker=ticker.upper()).first()
+    if not db_ticker:
+        return []
+
+    history = db.query(ChatHistory).filter(
+        ChatHistory.ticker_id == db_ticker.id
+    ).order_by(ChatHistory.created_at.asc()).all()
+
+    return [{"role": h.role, "content": h.content, "created_at": str(h.created_at)} for h in history]
 
 @router.post("/")
 def chat(request: ChatRequest, db: Session = Depends(get_db)):
@@ -34,10 +47,33 @@ def chat(request: ChatRequest, db: Session = Depends(get_db)):
     # 5. 실적 데이터 수집
     earnings = fetch_earnings(ticker)
 
-    # 6. SSE 스트리밍 응답
+    # 6. 사용자 질문 저장
+    user_msg = ChatHistory(
+        ticker_id=db_ticker.id,
+        role="user",
+        content=query
+    )
+    db.add(user_msg)
+    db.commit()
+
+    # 7. SSE 스트리밍 + 답변 저장
+    answer_buffer = []
+
     def stream():
         for text in generate_answer_stream(ticker, query, related_news, db_ticker.name, earnings):
+            answer_buffer.append(text)
             yield f"data: {text}\n\n"
+
+        # 스트리밍 완료 후 답변 저장
+        full_answer = "".join(answer_buffer)
+        assistant_msg = ChatHistory(
+            ticker_id=db_ticker.id,
+            role="assistant",
+            content=full_answer
+        )
+        db.add(assistant_msg)
+        db.commit()
+
         yield "data: [DONE]\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
